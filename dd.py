@@ -32,8 +32,8 @@ class DayDayUp:
         ok: 结束此次学习
         回车：查看时长
         """
-        self.start = datetime.now()
         self.topic = input('>>> ')
+        self.start = datetime.now()
         print(f'<{self.topic}> 于 {self.start_str} 开始...')
 
         while True:
