@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/local/bin/python3
 
 from datetime import datetime, timedelta
 import pyperclip
@@ -44,10 +44,13 @@ class DayDayUp:
             elif command == 'ok':
                 # 输出信息、拷贝到剪贴板
                 self.output()
-                # 写入日志
-                self.log()
-                # 总结（条形图）
-                self.sum_up()
+                # 日常杂项记录不写入，学习时间写入
+                command = input('是否写入日志？（yes、回车）').lower().strip()
+                if command == 'yes':
+                    # 写入日志
+                    self.log()
+                    # 总结（条形图）
+                    self.sum_up()
                 break
 
     def output(self):
