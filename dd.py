@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import pyperclip
 from collections import OrderedDict
 import matplotlib.pyplot as plt
+import sys
 
 
 class DayDayUp:
@@ -45,8 +46,7 @@ class DayDayUp:
                 # 输出信息、拷贝到剪贴板
                 self.output()
                 # 日常杂项记录不写入，学习时间写入
-                command = input('是否写入日志？（yes、回车）').lower().strip()
-                if command == 'yes':
+                if input('是否写入日志？（yes、回车）').lower().strip() == 'yes':
                     # 写入日志
                     self.log()
                     # 总结（条形图）
@@ -90,7 +90,7 @@ class DayDayUp:
                     # 更新字典值
                     day_dict[day] += hour
 
-        for k, v in day_dict.items():
+        for k, v in reversed(day_dict.items()):
             print(f'{k} → {v:.1f} 小时')
 
         # 条形图
@@ -106,4 +106,11 @@ class DayDayUp:
 
 if __name__ == '__main__':
     dd = DayDayUp()
-    dd.go()
+    if len(sys.argv) > 1:
+        if sys.argv[1].lower() == 'log':
+            dd.sum_up()
+        else:
+            print('只支持 <log> 命令')
+            sys.exit()
+    else:
+        dd.go()
