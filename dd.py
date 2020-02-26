@@ -65,9 +65,9 @@ class DayDayUp:
         record = delimiter.join([self.topic, str(self.duration(self.end)), self.start_str, self.end_str])
         with open('record.txt', 'a') as f:
             f.write(record + '\n')
-        print('<<< 已写入日志。')
+        print(f'内容 <{record}> 已写入日志。')
 
-    def sum_up(self):
+    def sum_up(self, show=False):
         # 创建最近 xx 日的字典
         day_dict = OrderedDict()
         for n in range(0, 30):
@@ -90,8 +90,9 @@ class DayDayUp:
                     # 更新字典值
                     day_dict[day] += hour
 
-        for k, v in reversed(day_dict.items()):
-            print(f'{k} → {v:.1f} 小时')
+        if show:
+            for k, v in reversed(day_dict.items()):
+                print(f'{k} → {v:.1f} 小时')
 
         # 条形图
         title = []
@@ -108,7 +109,7 @@ if __name__ == '__main__':
     dd = DayDayUp()
     if len(sys.argv) > 1:
         if sys.argv[1].lower() == 'log':
-            dd.sum_up()
+            dd.sum_up(show=True)
         else:
             print('只支持 <log> 命令')
             sys.exit()
