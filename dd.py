@@ -25,6 +25,10 @@ class DayDayUp:
     def end_str(self):
         return self.end.strftime("%Y-%m-%d %H:%M")
 
+    @property
+    def end_str_time_only(self):
+        return self.end.strftime("%H:%M")
+
     def duration(self, t):
         return timedelta(seconds=(t - self.start).seconds)
 
@@ -33,8 +37,9 @@ class DayDayUp:
         ok: 结束此次学习
         回车：查看时长
         """
-        self.topic = input('>>> ')
         self.start = datetime.now()
+        self.topic = input('>>> ')
+
         print(f'<{self.topic}> 于 {self.start_str} 开始...')
 
         while True:
@@ -54,8 +59,13 @@ class DayDayUp:
                 break
 
     def output(self):
+        """
+        输出内容: 内容 2020-02-27 11:02 - 2020-02-27 11:17  （已复制到剪贴板）
+        改进:     内容 2020-02-27 11:02 - 11:17  （已复制到剪贴板）
+        （适应 Fantastical App）
+        """
         self.end = datetime.now()
-        text = f'{self.topic} {self.start_str} - {self.end_str}'
+        text = f'{self.topic} {self.start_str} - {self.end_str_time_only}'
         pyperclip.copy(text)
         print('本次时长:', self.duration(self.end))
         print('-' * 50 + '\n' + text + '  （已复制到剪贴板）\n' + '-' * 50)
