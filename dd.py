@@ -1,10 +1,12 @@
 #!/usr/local/bin/python3
 
-from datetime import datetime, timedelta
-import pyperclip
-from collections import OrderedDict
-import matplotlib.pyplot as plt
 import sys
+import os
+from datetime import datetime, timedelta
+from collections import OrderedDict
+
+import pyperclip
+import matplotlib.pyplot as plt
 
 
 class DayDayUp:
@@ -86,7 +88,8 @@ class DayDayUp:
         # print(day_dict)  # {日期：当日学习时长, 日期：当日学习时长, 日期：当日学习时长 。。。}
 
         # 暴力遍历日志，统计时长
-        with open('record.txt', 'r') as f:
+        f = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'record.txt')
+        with open(f, 'r') as f:
             for line in f.readlines():
                 # 拿到每一行的日期、时长，加入字典的value
                 line = line.split(' | ')  # ['测试', '1:23:45', '2020-02-08 23:10', '2020-02-08 23:10\n']
