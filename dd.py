@@ -44,6 +44,7 @@ class DayDayUp:
         回车：查看时长
         """
         self.start = datetime.now()
+        self.topic = input('：')
         print(f'于 {self.start_str} 开始...')
 
         while True:
@@ -67,7 +68,6 @@ class DayDayUp:
         改进:     内容 2020-02-27 11:02 - 11:17  （已复制到剪贴板）
         （适应 Fantastical App）
         """
-        self.topic = input('>>> ')
         self.end = datetime.now()
         text = f'{self.topic} {self.start_str} - {self.end_str_time_only}'
         pyperclip.copy(text)
