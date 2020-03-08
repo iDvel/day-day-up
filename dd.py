@@ -31,6 +31,10 @@ class DayDayUp:
     def end_str_time_only(self):
         return self.end.strftime("%H:%M")
 
+    @property
+    def log_path(self):
+        return os.path.join(os.path.abspath(os.path.dirname(__file__)), 'record.txt')
+
     def duration(self, t):
         return timedelta(seconds=(t - self.start).seconds)
 
@@ -75,7 +79,7 @@ class DayDayUp:
     def log(self):
         delimiter = ' | '
         record = delimiter.join([self.topic, str(self.duration(self.end)), self.start_str, self.end_str])
-        with open('record.txt', 'a') as f:
+        with open(self.log_path, 'a') as f:
             f.write(record + '\n')
         print(f'内容 <{record}> 已写入日志。')
 
@@ -88,8 +92,7 @@ class DayDayUp:
         # print(day_dict)  # {日期：当日学习时长, 日期：当日学习时长, 日期：当日学习时长 。。。}
 
         # 暴力遍历日志，统计时长
-        f = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'record.txt')
-        with open(f, 'r') as f:
+        with open(self.log_path, 'r') as f:
             for line in f.readlines():
                 # 拿到每一行的日期、时长，加入字典的value
                 line = line.split(' | ')  # ['测试', '1:23:45', '2020-02-08 23:10', '2020-02-08 23:10\n']
