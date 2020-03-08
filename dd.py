@@ -44,8 +44,7 @@ class DayDayUp:
         回车：查看时长
         """
         self.start = datetime.now()
-        self.topic = input('：')
-        print(f'于 {self.start_str} 开始...')
+        print(f'内容 <{self.topic}> 于 {self.start_str} 开始...')
 
         while True:
             command = input('等待命令...（ok、回车）：').lower().strip()
@@ -122,10 +121,10 @@ class DayDayUp:
 if __name__ == '__main__':
     dd = DayDayUp()
     if len(sys.argv) > 1:
-        if sys.argv[1].lower() == 'log':
+        if len(sys.argv) == 2 and sys.argv[1].lower() == 'log':
             dd.sum_up(show=True)
         else:
-            print('只支持 <log> 命令')
-            sys.exit()
+            dd.topic = ' '.join(sys.argv[1:])
+            dd.go()
     else:
-        dd.go()
+        print('请输入参数')
