@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 
 
 class DayDayUp:
+    DELIMITER = ' | '
 
     def __init__(self):
         # 开始时间
@@ -74,8 +75,7 @@ class DayDayUp:
         print('-' * 50 + '\n' + text + '  （已复制到剪贴板）\n' + '-' * 50)
 
     def log(self):
-        delimiter = ' | '
-        record = delimiter.join([self.topic, str(self.duration(self.end)), self.start_str, self.end_str])
+        record = self.DELIMITER.join([self.topic, str(self.duration(self.end)), self.start_str, self.end_str])
         with open(self.log_path, 'a') as f:
             f.write(record + '\n')
         print(f'内容 <{record}> 已写入日志。')
@@ -92,7 +92,7 @@ class DayDayUp:
         with open(self.log_path, 'r') as f:
             for line in f.readlines():
                 # 拿到每一行的日期、时长，加入字典的value
-                line = line.split(' | ')  # ['测试', '1:23:45', '2020-02-08 23:10', '2020-02-08 23:10\n']
+                line = line.split(self.DELIMITER)  # ['测试', '1:23:45', '2020-02-08 23:10', '2020-02-08 23:10\n']
                 day = line[2][:10]  # '2020-02-08'
                 if day in day_dict:
                     # 把 <时：分：秒> 转化成 <X.X小时>
@@ -117,12 +117,32 @@ class DayDayUp:
         plt.barh(title, data)
         plt.show()
 
+    def change_last_record_content(self, t):
+        """ 修改最新的一条记录的内容 """
+        import re
+        with open(self.log_path, 'r') as f:
+            lines = f.readlines()
+            content = lines[:-1]
+            old = lines[-1]
+        with open(self.log_path, 'w') as f:
+            f.writelines(content)
+            new = re.sub(r'(.*?)[\s]{1}[\|]{1}[\s]{1}', t + self.DELIMITER, old, 1)
+            f.write(new)
+        print(old, end='')
+        print('↓ ↓ ↓ 修改成功 ↓ ↓ ↓'.center(len(new)))
+        print(new, end='')
+
 
 if __name__ == '__main__':
+    # alias dd = "/.../dd.py"
+    # alias dl = "/.../dd.py log"
+    # alias dc = "/.../dd.py change"
     dd = DayDayUp()
     if len(sys.argv) > 1:
         if len(sys.argv) == 2 and sys.argv[1].lower() == 'log':
             dd.sum_up(show=True)
+        elif sys.argv[1].lower() == 'change':
+            dd.change_last_record_content(' '.join(sys.argv[2:]))
         else:
             dd.topic = ' '.join(sys.argv[1:])
             dd.go()
