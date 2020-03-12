@@ -136,15 +136,21 @@ class DayDayUp:
 if __name__ == '__main__':
     # alias dd = "/.../dd.py"
     # alias dl = "/.../dd.py log"
-    # alias dc = "/.../dd.py change"
+    # alias da = "/.../dd.py alter"
     dd = DayDayUp()
     if len(sys.argv) > 1:
         if len(sys.argv) == 2 and sys.argv[1].lower() == 'log':
             dd.sum_up(show=True)
-        elif sys.argv[1].lower() == 'change':
+        elif len(sys.argv) == 2 and sys.argv[1].lower() == 'alter':
+            print('请输入参数')
+        elif sys.argv[1].lower() == 'alter':
             dd.change_last_record_content(' '.join(sys.argv[2:]))
         else:
             dd.topic = ' '.join(sys.argv[1:])
             dd.go()
     else:
-        print('请输入参数')
+        print("""\
+Usage:
+  <dd content>   开始新的学习内容
+  <dl>           查询学习时长
+  <da content>   修改最近的一次提交内容""")
