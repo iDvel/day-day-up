@@ -1,5 +1,3 @@
-#!/usr/local/bin/python3
-
 import sys
 import os
 from datetime import datetime, timedelta
@@ -134,9 +132,9 @@ class DayDayUp:
 
 
 if __name__ == '__main__':
-    # alias dd = "/.../dd.py"
-    # alias dl = "/.../dd.py log"
-    # alias da = "/.../dd.py alter"
+    # alias dd = "python /.../dd.py"
+    # alias dl = "python /.../dd.py log"
+    # alias da = "python /.../dd.py alter"
     dd = DayDayUp()
     if len(sys.argv) > 1:
         if len(sys.argv) == 2 and sys.argv[1].lower() == 'log':
