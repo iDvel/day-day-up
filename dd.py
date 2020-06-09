@@ -39,8 +39,12 @@ class DayDayUp:
         return timedelta(seconds=(t - self.start).seconds)
 
     def time_to_hour(self, t):
-        """ # 把 <时：分：秒> 转化成 <X.X小时> """
-        pass
+        """ 把 <时：分：秒> 转化成 <X.X小时>  t: 1:23:45 """
+        duration = t.split(':')  # ['1', '23', '45'] 时分秒
+        duration = [int(x) for x in duration]  # [1, 23, 45]
+        minute = duration[1] + duration[2] / 60
+        hour = duration[0] + minute / 60
+        return hour
 
     def go(self):
         """
@@ -98,13 +102,7 @@ class DayDayUp:
                 line = line.split(self.DELIMITER)  # ['测试', '1:23:45', '2020-02-08 23:10', '2020-02-08 23:10\n']
                 day = line[2][:10]  # '2020-02-08'
                 if day in day_dict:
-                    # 把 <时：分：秒> 转化成 <X.X小时>
-                    duration = line[1].split(':')  # ['1', '23', '45'] 时分秒
-                    duration = [int(x) for x in duration]  # [1, 23, 45]
-                    minute = duration[1] + duration[2] / 60
-                    hour = duration[0] + minute / 60
-                    # 更新字典值
-                    day_dict[day] += hour
+                    day_dict[day] += self.time_to_hour(line[1])
 
         if show:
             for k, v in reversed(day_dict.items()):
@@ -127,13 +125,7 @@ class DayDayUp:
             for line in f.readlines():
                 line = line.split(self.DELIMITER)
                 # print(line) # ['content', '1:00:11', '2020-01-01 21:47', '2020-01-01 22:47\n']
-
-                # 把 <时：分：秒> 转化成 <X.X小时>
-                duration = line[1].split(':')  # ['1', '23', '45'] 时分秒
-                duration = [int(x) for x in duration]  # [1, 23, 45]
-                minute = duration[1] + duration[2] / 60
-                hour = duration[0] + minute / 60
-
+                hour = self.time_to_hour(line[1])
                 if line[0] not in projects.keys():
                     projects[line[0]] = hour
                 else:
@@ -141,7 +133,6 @@ class DayDayUp:
         # pprint(projects) # OrderedDict([('content', 0), ('content', 0), ('content', 0), ... ])
         for content, hour in projects.items():
             print(f'{content}\t|→ 共 {hour:.1f} 小时')
-
 
     def change_last_record_content(self, t):
         """ 修改最新的一条记录的内容 """
@@ -165,15 +156,15 @@ def main():
     # alias da = "python /.../dd.py alter"
     # alias dq = "python /.../dd.py query"
     dd = DayDayUp()
-    if len(sys.argv) == 2:
-        if sys.argv[1].lower() == 'log':
+    if len(sys.argv) > 1:
+        if len(sys.argv) == 2 and sys.argv[1].lower() == 'log':
             dd.sum_up(show=True)
-        elif sys.argv[1].lower() == 'alter':
+        elif len(sys.argv) == 2 and sys.argv[1].lower() == 'query':
+            dd.query_project_duration()
+        elif len(sys.argv) == 2 and sys.argv[1].lower() == 'alter':
             print('请输入参数')
         elif sys.argv[1].lower() == 'alter':
             dd.change_last_record_content(' '.join(sys.argv[2:]))
-        elif sys.argv[1].lower() == 'query':
-            dd.query_project_duration()
         else:
             dd.topic = ' '.join(sys.argv[1:])
             dd.go()
@@ -187,6 +178,4 @@ def main():
 
 
 if __name__ == '__main__':
-    # main()
-    dd = DayDayUp()
-    dd.query_project_duration()
+    main()
