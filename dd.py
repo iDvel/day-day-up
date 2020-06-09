@@ -1,3 +1,4 @@
+from pprint import pprint
 import sys
 import os
 from datetime import datetime, timedelta
@@ -36,6 +37,10 @@ class DayDayUp:
 
     def duration(self, t):
         return timedelta(seconds=(t - self.start).seconds)
+
+    def time_to_hour(self, t):
+        """ # 把 <时：分：秒> 转化成 <X.X小时> """
+        pass
 
     def go(self):
         """
@@ -117,42 +122,26 @@ class DayDayUp:
 
     def query_project_duration(self):
         """ 查询同名的项目所用的总时间，比如看了一本书一共用了多久 """
-        # dq：列出所有项目列表，最近的排在最下面，前面标注编号
         projects = OrderedDict()  # {'project1': 3小时, 'project2': 6小时 ...}
         with open(self.log_path) as f:
-            number = 1
             for line in f.readlines():
-                key = line.split(self.DELIMITER)[0]
-                if key not in projects:
-                    projects[key] = 0
-            # print(projects) # OrderedDict([('content', 0), ('content', 0), ('content', 0), ... ])
+                line = line.split(self.DELIMITER)
+                # print(line) # ['content', '1:00:11', '2020-01-01 21:47', '2020-01-01 22:47\n']
 
-        id = OrderedDict()
-        i = 1
-        for key in projects:
-            id[str(i)] = key
-            i += 1
-        # print(id) # {1: 'content', 2: 'content', 3: 'content' ... }
+                # 把 <时：分：秒> 转化成 <X.X小时>
+                duration = line[1].split(':')  # ['1', '23', '45'] 时分秒
+                duration = [int(x) for x in duration]  # [1, 23, 45]
+                minute = duration[1] + duration[2] / 60
+                hour = duration[0] + minute / 60
 
-        for number, project in id.items():
-            print(f'{number}\t→ {project}')
+                if line[0] not in projects.keys():
+                    projects[line[0]] = hour
+                else:
+                    projects[line[0]] += hour
+        # pprint(projects) # OrderedDict([('content', 0), ('content', 0), ('content', 0), ... ])
+        for content, hour in projects.items():
+            print(f'{content}\t|→ 共 {hour:.1f} 小时')
 
-        # 输入查询命令，如 3，查询编号3的项目的有史以来的总时长
-        project_number = input('输入查询命令，number-[days]:')
-        project_name = id[project_number]
-
-        with open(self.log_path) as f:
-            for line in f.readlines():
-                line = line.split(self.DELIMITER)  # ['测试', '1:23:45', '2020-02-08 23:10', '2020-02-08 23:10\n']
-                if line[0] == project_name:
-                    # 把 <时：分：秒> 转化成 <X.X小时>
-                    duration = line[1].split(':')  # ['1', '23', '45'] 时分秒
-                    duration = [int(x) for x in duration]  # [1, 23, 45]
-                    minute = duration[1] + duration[2] / 60
-                    hour = duration[0] + minute / 60
-                    # 更新字典值
-                    projects[project_name] += hour
-        print(f'<{project_name}> 一共用时 {projects[project_name]:.1f} 小时')
 
     def change_last_record_content(self, t):
         """ 修改最新的一条记录的内容 """
@@ -184,7 +173,7 @@ def main():
         elif sys.argv[1].lower() == 'alter':
             dd.change_last_record_content(' '.join(sys.argv[2:]))
         elif sys.argv[1].lower() == 'query':
-            pass
+            dd.query_project_duration()
         else:
             dd.topic = ' '.join(sys.argv[1:])
             dd.go()
@@ -193,8 +182,11 @@ def main():
     Usage:
       dd <content>   开始新的学习内容
       dl             查询学习时长
-      da <content>   修改最近的一次提交内容为 content""")
+      da <content>   修改最近的一次提交内容为 content
+      dq             查询项目总时长""")
 
 
 if __name__ == '__main__':
-    main()
+    # main()
+    dd = DayDayUp()
+    dd.query_project_duration()
