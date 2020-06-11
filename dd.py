@@ -132,7 +132,8 @@ class DayDayUp:
                     projects[line[0]] += hour
         # pprint(projects) # OrderedDict([('content', 0), ('content', 0), ('content', 0), ... ])
         for content, hour in projects.items():
-            print(f'{content}\t|→ 共 {hour:.1f} 小时')
+            print(f'{hour:>4.1f} |{content}')
+            # print(f'{content}\t|→ 共 {hour:.1f} 小时')
 
     def change_last_record_content(self, t):
         """ 修改最新的一条记录的内容 """
@@ -170,11 +171,11 @@ def main():
             dd.go()
     else:
         print("""\
-    Usage:
-      dd <content>   开始新的学习内容
-      dl             查询学习时长
-      da <content>   修改最近的一次提交内容为 content
-      dq             查询项目总时长""")
+Usage:
+  dd <content>   开始新的学习内容
+  dl             查询学习时长
+  da <content>   修改最近的一次提交内容为 content
+  dq             查询项目总时长""")
 
 
 if __name__ == '__main__':
