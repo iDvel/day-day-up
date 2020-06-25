@@ -120,9 +120,10 @@ class DayDayUp:
 
     def query_project_duration(self):
         """ 查询同名的项目所用的总时间，比如看了一本书一共用了多久 """
+        # 两个 for 循环的 reversed() 让最后一次使用过的记录在最下面显示，而不是按照第一次记录的顺序显示
         projects = OrderedDict()  # {'project1': 3小时, 'project2': 6小时 ...}
         with open(self.log_path) as f:
-            for line in f.readlines():
+            for line in reversed(f.readlines()):
                 line = line.split(self.DELIMITER)
                 # print(line) # ['content', '1:00:11', '2020-01-01 21:47', '2020-01-01 22:47\n']
                 hour = self.time_to_hour(line[1])
@@ -131,7 +132,7 @@ class DayDayUp:
                 else:
                     projects[line[0]] += hour
         # pprint(projects) # OrderedDict([('content', 0), ('content', 0), ('content', 0), ... ])
-        for content, hour in projects.items():
+        for content, hour in reversed(projects.items()):
             print(f'{hour:>4.1f} |{content}')
             # print(f'{content}\t|→ 共 {hour:.1f} 小时')
 
