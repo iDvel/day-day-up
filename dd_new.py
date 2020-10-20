@@ -9,9 +9,9 @@ class DayDayUp():
     def __init__(self):
         # 学习内容
         self.content = None
-        # 开始时间
+        # 开始时间 :datetime
         self.start = None
-        # 结束时间
+        # 结束时间 :datetime
         self.end = None
         # 学习时长（x.xx小时）两位小数
         self.duration = None
@@ -44,11 +44,14 @@ class DayDayUp():
         （适应 Fantastical App）
         """
         self.end = datetime.now().replace(microsecond=0)
-        text = f'{self.content} {self.start} - {self.end.time()}'
+
+        # 记录和输出的信息都去掉秒数，否则显得太乱
+        text = f"{self.content} {self.start.strftime('%Y-%m-%d %H:%M')} - {self.end.strftime('%H:%M')}"
         pyperclip.copy(text)
         print('-' * 50)
-        print('本次时长:', self.end - self.start)
-        print('-' * 50 + '\n' + text + '  （已复制到剪贴板）\n' + '-' * 50)
+        print('本次时长:', (self.end - self.start).__str__()[:-3])
+        print('-' * 50)
+        print(text + '  （已复制到剪贴板）\n' + '-' * 50)
 
 
 def main():
