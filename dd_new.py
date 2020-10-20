@@ -1,7 +1,9 @@
 from datetime import datetime, timedelta
 import sys
+from decimal import Decimal, ROUND_HALF_UP
 
 import pyperclip
+import sqlite3
 
 
 class DayDayUp():
@@ -31,17 +33,17 @@ class DayDayUp():
                 self.output()
                 # 日常杂项临时记录的记录，回车不写入。学习时间yes写入
                 if input('是否写入日志？（yes、回车）').lower().strip() == 'yes':
-                    # 写入日志
+                    # 写入日志（数据库）
                     self.log()
                     # 总结（条形图）
-                    self.sum_up()
+                    # self.sum_up()
                 break
 
     def output(self):
         """
         输出内容: 内容 2020-02-27 11:02 - 2020-02-27 11:17  （已复制到剪贴板）
         改进:     内容 2020-02-27 11:02 - 11:17  （已复制到剪贴板）
-        （适应 Fantastical App）
+        （为了适应 Fantastical App，之前的格式有时候直接粘贴它可能在越过零点时识别错误）
         """
         self.end = datetime.now().replace(microsecond=0)
 
@@ -53,6 +55,33 @@ class DayDayUp():
         print('-' * 50)
         print(text + '  （已复制到剪贴板）\n' + '-' * 50)
 
+    def log(self):
+        """ 学习日志记录，写入数据库 """
+        conn = sqlite3.connect('test.sqlite3')
+        c = conn.cursor()
+
+        c.execute("""
+        CREATE TABLE IF NOT EXISTS records (
+          "content" VARCHAR(37) NOT NULL,
+          "start" DATETIME NOT NULL,
+          "end" DATETIME NOT NULL,
+          "hours" float NOT NULL
+        );
+        """)
+        conn.commit()
+
+        # 持续时间转化为小时数
+        self.end += timedelta(minutes=1) #TODO DELETE
+        h = (self.end - self.start).seconds / 60 / 60
+        h = Decimal(str(h)).quantize(Decimal('0.00'), rounding=ROUND_HALF_UP) # 四舍五入保留2位小数
+
+        c.execute(f"""INSERT INTO records VALUES ('{self.content}',
+                                                  '{self.start.strftime('%Y-%m-%d %H:%M')}',
+                                                  '{self.end.strftime('%Y-%m-%d %H:%M')}',
+                                                  {h}
+                                                  )""")
+        conn.commit()
+        conn.close()
 
 def main():
     # 用终端启动：
