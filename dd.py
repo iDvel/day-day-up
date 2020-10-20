@@ -1,69 +1,42 @@
-from pprint import pprint
-import sys
-import os
 from datetime import datetime, timedelta
+from decimal import Decimal, ROUND_HALF_UP
 from collections import OrderedDict
+import sqlite3
+import sys
 
 import pyperclip
 import matplotlib.pyplot as plt
 
 
-class DayDayUp:
-    DELIMITER = ' | '
+class DayDayUp():
 
     def __init__(self):
-        # 开始时间
-        self.start = None
-        # 结束时间
-        self.end = None
         # 学习内容
-        self.topic = None
-
-    @property
-    def start_str(self):
-        return self.start.strftime("%Y-%m-%d %H:%M")
-
-    @property
-    def end_str(self):
-        return self.end.strftime("%Y-%m-%d %H:%M")
-
-    @property
-    def end_str_time_only(self):
-        return self.end.strftime("%H:%M")
-
-    @property
-    def log_path(self):
-        return os.path.join(os.path.abspath(os.path.dirname(__file__)), 'record.txt')
-
-    def duration(self, t):
-        return timedelta(seconds=(t - self.start).seconds)
-
-    def time_to_hour(self, t):
-        """ 把 <时：分：秒> 转化成 <X.X小时>  t: 1:23:45 """
-        duration = t.split(':')  # ['1', '23', '45'] 时分秒
-        duration = [int(x) for x in duration]  # [1, 23, 45]
-        minute = duration[1] + duration[2] / 60
-        hour = duration[0] + minute / 60
-        return hour
+        self.content = None
+        # 开始时间 :datetime
+        self.start = None
+        # 结束时间 :datetime
+        self.end = None
+        # db
+        self.conn = sqlite3.connect('record.sqlite3')
+        self.c = self.conn.cursor()
 
     def go(self):
-        """
-        ok: 结束此次学习
-        回车：查看时长
-        """
-        self.start = datetime.now()
-        print(f'内容 <{self.topic}> 于 {self.start_str} 开始...')
+        """ 启动。ok: 结束此次学习。 回车：查看持续时长 """
+
+        self.start = datetime.now().replace(microsecond=0)
+        print(f'内容 <{self.content}> 于 {self.start} 开始...')
 
         while True:
             command = input('等待命令...（ok、回车）：').lower().strip()
             if command == '':
-                print('已经坚持了', self.duration(datetime.now()))
+                print(f'已经坚持了 {datetime.now().replace(microsecond=0) - self.start}')
             elif command == 'ok':
                 # 输出信息、拷贝到剪贴板
                 self.output()
-                # 日常杂项记录不写入，学习时间写入
+                # 日常杂项临时记录的记录，回车不写入。学习时间yes写入
                 if input('是否写入日志？（yes、回车）').lower().strip() == 'yes':
-                    # 写入日志
+                    # 写入日志（数据库）
                     self.log()
                     # 总结（条形图）
                     self.sum_up()
@@ -73,45 +46,65 @@ class DayDayUp:
         """
         输出内容: 内容 2020-02-27 11:02 - 2020-02-27 11:17  （已复制到剪贴板）
         改进:     内容 2020-02-27 11:02 - 11:17  （已复制到剪贴板）
-        （适应 Fantastical App）
+        （为了适应 Fantastical App，之前的格式有时候直接粘贴它可能在越过零点时识别错误）
         """
-        self.end = datetime.now()
-        text = f'{self.topic} {self.start_str} - {self.end_str_time_only}'
+        self.end = datetime.now().replace(microsecond=0)
+
+        # 记录和输出的信息都去掉秒数，否则显得太乱
+        text = f"{self.content} {self.start.strftime('%Y-%m-%d %H:%M')} - {self.end.strftime('%H:%M')}"
         pyperclip.copy(text)
-        print('本次时长:', self.duration(self.end))
-        print('-' * 50 + '\n' + text + '  （已复制到剪贴板）\n' + '-' * 50)
+        print('-' * 50)
+        print('本次时长:', (self.end - self.start).__str__()[:-3])
+        print('-' * 50)
+        print(text + '  （已复制到剪贴板）\n' + '-' * 50)
 
     def log(self):
-        record = self.DELIMITER.join([self.topic, str(self.duration(self.end)), self.start_str, self.end_str])
-        with open(self.log_path, 'a') as f:
-            f.write(record + '\n')
-        print(f'内容 <{record}> 已写入日志。')
+        """ 学习日志记录，写入数据库 """
 
-    def sum_up(self, show=False):
-        # 创建最近30日的字典
-        day_dict = OrderedDict()
-        for n in range(0, 30):
-            key = (datetime.today() - timedelta(days=n)).strftime('%Y-%m-%d')
-            day_dict[key] = 0
-        # print(day_dict)  # {日期：当日学习时长, 日期：当日学习时长, 日期：当日学习时长 。。。}
+        self.c.execute("""
+        CREATE TABLE IF NOT EXISTS records (
+          "content" VARCHAR(37) NOT NULL,
+          "hours" float NOT NULL,
+          "start" DATETIME NOT NULL,
+          "end" DATETIME NOT NULL
+        );
+        """)
+        self.conn.commit()
 
-        # 暴力遍历日志，统计时长
-        with open(self.log_path) as f:
-            for line in f.readlines():
-                # 拿到每一行的日期、时长，加入字典的value
-                line = line.split(self.DELIMITER)  # ['测试', '1:23:45', '2020-02-08 23:10', '2020-02-08 23:10\n']
-                day = line[2][:10]  # '2020-02-08'
-                if day in day_dict:
-                    day_dict[day] += self.time_to_hour(line[1])
+        # 持续时间转化为小时数
+        self.end += timedelta(minutes=1)  # TODO DELETE
+        h = (self.end - self.start).seconds / 60 / 60
+        h = Decimal(str(h)).quantize(Decimal('0.00'), rounding=ROUND_HALF_UP)  # 四舍五入保留2位小数
 
-        if show:
-            for k, v in reversed(day_dict.items()):
-                print(f'{k} → {v:.1f} 小时')
+        self.c.execute(f"""INSERT INTO records VALUES ('{self.content}',
+                                                        {h},
+                                                        '{self.start.strftime('%Y-%m-%d %H:%M')}',
+                                                        '{self.end.strftime('%Y-%m-%d %H:%M')}'
+                                                        )""")
+        self.conn.commit()
+
+    def sum_up(self):
+        """ 条形图展示，默认最近 30 天 """
+        d = OrderedDict()
+        for i in range(0, 30):
+            key = (datetime.today() - timedelta(days=i)).strftime('%Y-%m-%d')
+            d[key] = 0.00
+
+        # 查询每日时长，相加
+        self.c.execute('SELECT start, hours FROM records')
+        for start, hours in self.c.fetchall():
+            start = start.split(' ')[0]
+            if start in d.keys():
+                d[start] += float(hours)
+
+        # 终端显示
+        for k, v in reversed(d.items()):
+            print(f'{k} → {v:.1f} 小时')
 
         # 条形图
         title = []
         data = []
-        for k, v in day_dict.items():
+        for k, v in d.items():
             title.append(k)
             data.append(v)
         plt.title = '这个参数有用吗？？？'
@@ -119,64 +112,49 @@ class DayDayUp:
         plt.show()
 
     def query_project_duration(self):
-        """ 查询同名的项目所用的总时间，比如看了一本书一共用了多久 """
-        # 两个 for 循环的 reversed() 让最后一次使用过的记录在最下面显示，而不是按照第一次记录的顺序显示
-        projects = OrderedDict()  # {'project1': 3小时, 'project2': 6小时 ...}
-        with open(self.log_path) as f:
-            for line in reversed(f.readlines()):
-                line = line.split(self.DELIMITER)
-                # print(line) # ['content', '1:00:11', '2020-01-01 21:47', '2020-01-01 22:47\n']
-                hour = self.time_to_hour(line[1])
-                if line[0] not in projects.keys():
-                    projects[line[0]] = hour
-                else:
-                    projects[line[0]] += hour
-        # pprint(projects) # OrderedDict([('content', 0), ('content', 0), ('content', 0), ... ])
-        for content, hour in reversed(projects.items()):
-            print(f'{hour:>4.1f} |{content}')
-            # print(f'{content}\t|→ 共 {hour:.1f} 小时')
+        """ 查询每个项目的工作总时长 """
+        d = OrderedDict()
 
-    def change_last_record_content(self, t):
-        """ 修改最新的一条记录的内容 """
-        import re
-        with open(self.log_path, 'r') as f:
-            lines = f.readlines()
-            content = lines[:-1]
-            old = lines[-1]
-        with open(self.log_path, 'w') as f:
-            f.writelines(content)
-            new = re.sub(r'(.*?)[\s]{1}[\|]{1}[\s]{1}', t + self.DELIMITER, old, 1)
-            f.write(new)
-        print(old, end='')
-        print('↓ ↓ ↓ 修改成功 ↓ ↓ ↓'.center(len(new)))
-        print(new, end='')
+        self.c.execute("SELECT content, hours FROM records")
+
+        for content, hour in self.c.fetchall():
+            if content not in d.keys():
+                d[content] = hour
+            else:
+                d[content] += hour
+
+        for content, hours in d.items():
+            print(f'{hours:>4.1f} |{content}')
+
+    def __del__(self):
+        self.conn.close()
 
 
 def main():
+    # 用终端启动：
     # alias dd = "python /.../dd.py"
     # alias dl = "python /.../dd.py log"
-    # alias da = "python /.../dd.py alter"
     # alias dq = "python /.../dd.py query"
+
+    argv = sys.argv
+    print(argv)
     dd = DayDayUp()
-    if len(sys.argv) > 1:
-        if len(sys.argv) == 2 and sys.argv[1].lower() == 'log':
-            dd.sum_up(show=True)
-        elif len(sys.argv) == 2 and sys.argv[1].lower() == 'query':
-            dd.query_project_duration()
-        elif len(sys.argv) == 2 and sys.argv[1].lower() == 'alter':
-            print('请输入参数')
-        elif sys.argv[1].lower() == 'alter':
-            dd.change_last_record_content(' '.join(sys.argv[2:]))
-        else:
-            dd.topic = ' '.join(sys.argv[1:])
-            dd.go()
-    else:
+
+    # argv = ['dd', 'log']
+
+    if len(argv) == 1:
         print("""\
 Usage:
   dd <content>   开始新的学习内容
-  dl             查询学习时长
-  da <content>   修改最近的一次提交内容为 content
-  dq             查询项目总时长""")
+  dl [days]      默认查询最近30日学习时长
+  dq             查询每个项目的总时长""")
+    elif len(argv) == 2 and argv[1] == 'log':
+        dd.sum_up()
+    elif len(argv) == 1 and argv[1] == 'query':
+        dd.query_project_duration()
+    else:
+        dd.content = ' '.join(argv[1:])
+        dd.go()
 
 
 if __name__ == '__main__':
