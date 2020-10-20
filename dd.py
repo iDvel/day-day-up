@@ -3,6 +3,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from collections import OrderedDict
 import sqlite3
 import sys
+import os
 
 import pyperclip
 import matplotlib.pyplot as plt
@@ -18,7 +19,9 @@ class DayDayUp():
         # 结束时间 :datetime
         self.end = None
         # db
-        self.conn = sqlite3.connect('record.sqlite3')
+        base_dir = os.path.abspath(os.path.dirname(__file__))
+        db_dir = os.path.join(base_dir, 'record.sqlite3')
+        self.conn = sqlite3.connect(db_dir)
         self.c = self.conn.cursor()
 
     def go(self):
@@ -133,14 +136,12 @@ class DayDayUp():
 def main():
     # 用终端启动：
     # alias dd = "python /.../dd.py"
-    # alias dl = "python /.../dd.py log"
-    # alias dq = "python /.../dd.py query"
+    # alias dl = "python /.../dd.py log~"
+    # alias dq = "python /.../dd.py query~"
 
     argv = sys.argv
     print(argv)
     dd = DayDayUp()
-
-    # argv = ['dd', 'log']
 
     if len(argv) == 1:
         print("""\
@@ -148,9 +149,9 @@ Usage:
   dd <content>   开始新的学习内容
   dl [days]      默认查询最近30日学习时长
   dq             查询每个项目的总时长""")
-    elif len(argv) == 2 and argv[1] == 'log':
+    elif len(argv) == 2 and argv[1] == 'log~':
         dd.sum_up()
-    elif len(argv) == 1 and argv[1] == 'query':
+    elif len(argv) == 2 and argv[1] == 'query~':
         dd.query_project_duration()
     else:
         dd.content = ' '.join(argv[1:])
