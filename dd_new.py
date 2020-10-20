@@ -113,8 +113,22 @@ class DayDayUp():
         plt.barh(title, data)
         plt.show()
 
+    def query_project_duration(self):
+        """ 查询每个项目的工作总时长 """
+        d = OrderedDict()
+
+        self.c.execute("SELECT content, hours FROM records")
+
+        for content, hour in self.c.fetchall():
+            if content not in d.keys():
+                d[content] = hour
+            else:
+                d[content] += hour
+
+        for content, hours in d.items():
+            print(f'{hours:>4.1f} |{content}')
+
     def __del__(self):
-        print('Bye~')
         self.conn.close()
 
 
@@ -126,8 +140,8 @@ def main():
 
     dd = DayDayUp()
 
-    # argv = ['dd']
-    argv = ['dd', '测试']
+    argv = ['dq']
+    # argv = ['dd', '测试']
 
     if len(argv) == 1 and argv[0] == 'dd':
         print("""\
@@ -136,9 +150,9 @@ Usage:
   dl [days]      默认查询最近30日学习时长
   dq             查询每个项目的总时长""")
     elif len(argv) == 1 and argv[0] == 'dl':
-        pass
-    elif len(argv) == 1 and [0] == 'dq':
-        pass
+        dd.sum_up()
+    elif len(argv) == 1 and argv[0] == 'dq':
+        dd.query_project_duration()
     else:
         dd.content = ' '.join(argv[1:])
         dd.go()
