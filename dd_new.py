@@ -1,9 +1,10 @@
 from datetime import datetime, timedelta
-import sys
 from decimal import Decimal, ROUND_HALF_UP
+import sqlite3
+import sys
 
 import pyperclip
-import sqlite3
+import matplotlib.pyplot as plt
 
 
 class DayDayUp():
@@ -16,7 +17,7 @@ class DayDayUp():
         # 结束时间 :datetime
         self.end = None
         # 学习时长（x.xx小时）两位小数
-        self.duration = None
+        # self.duration = None
 
     def go(self):
         """ 启动。ok: 结束此次学习。 回车：查看持续时长 """
@@ -36,7 +37,7 @@ class DayDayUp():
                     # 写入日志（数据库）
                     self.log()
                     # 总结（条形图）
-                    # self.sum_up()
+                    self.sum_up()
                 break
 
     def output(self):
@@ -63,25 +64,41 @@ class DayDayUp():
         c.execute("""
         CREATE TABLE IF NOT EXISTS records (
           "content" VARCHAR(37) NOT NULL,
+          "hours" float NOT NULL,
           "start" DATETIME NOT NULL,
-          "end" DATETIME NOT NULL,
-          "hours" float NOT NULL
+          "end" DATETIME NOT NULL
         );
         """)
         conn.commit()
 
         # 持续时间转化为小时数
-        self.end += timedelta(minutes=1) #TODO DELETE
+        self.end += timedelta(minutes=1)  # TODO DELETE
         h = (self.end - self.start).seconds / 60 / 60
-        h = Decimal(str(h)).quantize(Decimal('0.00'), rounding=ROUND_HALF_UP) # 四舍五入保留2位小数
+        h = Decimal(str(h)).quantize(Decimal('0.00'), rounding=ROUND_HALF_UP)  # 四舍五入保留2位小数
 
         c.execute(f"""INSERT INTO records VALUES ('{self.content}',
+                                                  {h},
                                                   '{self.start.strftime('%Y-%m-%d %H:%M')}',
-                                                  '{self.end.strftime('%Y-%m-%d %H:%M')}',
-                                                  {h}
+                                                  '{self.end.strftime('%Y-%m-%d %H:%M')}'
                                                   )""")
         conn.commit()
         conn.close()
+
+    def sum_up(self):
+        """ 条形图展示，默认最近 30 天 """
+
+
+
+        # 条形图
+        # title = []
+        # data = []
+        # for k, v in day_dict.items():
+        #     title.append(k)
+        #     data.append(v)
+        # plt.title = '这个参数有用吗？？？'
+        # plt.barh(title, data)
+        # plt.show()
+
 
 def main():
     # 用终端启动：
