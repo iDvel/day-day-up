@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from decimal import Decimal, ROUND_HALF_UP
+from collections import OrderedDict
 import sqlite3
 import sys
 
@@ -18,6 +19,10 @@ class DayDayUp():
         self.end = None
         # 学习时长（x.xx小时）两位小数
         # self.duration = None
+        # sql
+        self.conn = sqlite3.connect('test.sqlite3')
+        self.c = self.conn.cursor()
+
 
     def go(self):
         """ 启动。ok: 结束此次学习。 回车：查看持续时长 """
@@ -58,10 +63,8 @@ class DayDayUp():
 
     def log(self):
         """ 学习日志记录，写入数据库 """
-        conn = sqlite3.connect('test.sqlite3')
-        c = conn.cursor()
 
-        c.execute("""
+        self.c.execute("""
         CREATE TABLE IF NOT EXISTS records (
           "content" VARCHAR(37) NOT NULL,
           "hours" float NOT NULL,
@@ -69,36 +72,46 @@ class DayDayUp():
           "end" DATETIME NOT NULL
         );
         """)
-        conn.commit()
+        self.conn.commit()
 
         # 持续时间转化为小时数
         self.end += timedelta(minutes=1)  # TODO DELETE
         h = (self.end - self.start).seconds / 60 / 60
         h = Decimal(str(h)).quantize(Decimal('0.00'), rounding=ROUND_HALF_UP)  # 四舍五入保留2位小数
 
-        c.execute(f"""INSERT INTO records VALUES ('{self.content}',
+        self.c.execute(f"""INSERT INTO records VALUES ('{self.content}',
                                                   {h},
                                                   '{self.start.strftime('%Y-%m-%d %H:%M')}',
                                                   '{self.end.strftime('%Y-%m-%d %H:%M')}'
                                                   )""")
-        conn.commit()
-        conn.close()
+        self.conn.commit()
+        self.conn.close()
 
     def sum_up(self):
         """ 条形图展示，默认最近 30 天 """
+        d = OrderedDict()
+        for i in range(0, 30):
+            key = (datetime.today() - timedelta(days=i)).strftime('%Y-%m-%d')
+            d[key] = 0
+
+        # 查询每日时长，相加
 
 
 
         # 条形图
-        # title = []
-        # data = []
-        # for k, v in day_dict.items():
-        #     title.append(k)
-        #     data.append(v)
-        # plt.title = '这个参数有用吗？？？'
-        # plt.barh(title, data)
-        # plt.show()
+        title = []
+        data = []
+        for k, v in d.items():
+            title.append(k)
+            data.append(v)
+        plt.title = '这个参数有用吗？？？'
+        plt.barh(title, data)
+        plt.show()
 
+        print(title)
+
+    def __del__(self):
+        self.conn.close()
 
 def main():
     # 用终端启动：
