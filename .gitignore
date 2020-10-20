@@ -1,4 +1,5 @@
 record.txt
-record.sqlite3
 record*
+record.sqlite3
+*.sqlite3
 .idea/
