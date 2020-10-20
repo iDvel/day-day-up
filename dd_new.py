@@ -23,7 +23,6 @@ class DayDayUp():
         self.conn = sqlite3.connect('test.sqlite3')
         self.c = self.conn.cursor()
 
-
     def go(self):
         """ 启动。ok: 结束此次学习。 回车：查看持续时长 """
 
@@ -80,23 +79,29 @@ class DayDayUp():
         h = Decimal(str(h)).quantize(Decimal('0.00'), rounding=ROUND_HALF_UP)  # 四舍五入保留2位小数
 
         self.c.execute(f"""INSERT INTO records VALUES ('{self.content}',
-                                                  {h},
-                                                  '{self.start.strftime('%Y-%m-%d %H:%M')}',
-                                                  '{self.end.strftime('%Y-%m-%d %H:%M')}'
-                                                  )""")
+                                                        {h},
+                                                        '{self.start.strftime('%Y-%m-%d %H:%M')}',
+                                                        '{self.end.strftime('%Y-%m-%d %H:%M')}'
+                                                        )""")
         self.conn.commit()
-        self.conn.close()
 
     def sum_up(self):
         """ 条形图展示，默认最近 30 天 """
         d = OrderedDict()
         for i in range(0, 30):
             key = (datetime.today() - timedelta(days=i)).strftime('%Y-%m-%d')
-            d[key] = 0
+            d[key] = 0.00
 
         # 查询每日时长，相加
+        self.c.execute('SELECT start, hours FROM records')
+        for start, hours in self.c.fetchall():
+            start = start.split(' ')[0]
+            if start in d.keys():
+                d[start] += float(hours)
 
-
+        # 终端显示
+        for k, v in reversed(d.items()):
+            print(f'{k} → {v:.1f} 小时')
 
         # 条形图
         title = []
@@ -108,10 +113,10 @@ class DayDayUp():
         plt.barh(title, data)
         plt.show()
 
-        print(title)
-
     def __del__(self):
+        print('Bye~')
         self.conn.close()
+
 
 def main():
     # 用终端启动：
