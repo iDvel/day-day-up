@@ -27,6 +27,8 @@ class DayDayUp:
     def go(self):
         """ 启动。ok: 结束此次学习。 回车：查看持续时长 """
 
+        self.check()
+
         self.start = datetime.now().replace(microsecond=0)
         print(f'内容 <{self.content}> 于 {self.start} 开始...')
 
@@ -126,12 +128,38 @@ class DayDayUp:
         for content, hours in d.items().__reversed__():
             print(f'{hours:>4.1f} |{content}')
 
+    def check(self):
+        """
+        因为偶尔手动修改数据库，按照 stat 和 end 检查时长是否准确。
+        手动修改数据库时只需要修改 end 时间就可以了。
+        """
+        self.c.execute("SELECT hours, start, end FROM records")
+
+        count = 0
+        for hours, start, end in self.c.fetchall():
+            h = self.duration_to_hours(start, end)
+            # print(hours, h, start, end)
+            if hours != h:
+                if count == 0:
+                    print('发现错误统计，修改如下：')
+                count += 1
+                print(f"{hours} -> {h}")
+                self.c.execute(f"UPDATE records SET hours={h} WHERE start='{start}'")
+        self.conn.commit()
+
+        if count != 0:
+            print('-' * 50)
+
     def duration_to_hours(self, start, end):
         """ 持续时间转化为小时数 """
-        end += timedelta(minutes=1)  # TODO DELETE
+        if isinstance(start, str):
+            start = datetime.strptime(start, '%Y-%m-%d %H:%M')
+            end = datetime.strptime(end, '%Y-%m-%d %H:%M')
+
+        # end += timedelta(minutes=1)  # for test
         h = (end - start).seconds / 60 / 60
         h = Decimal(str(h)).quantize(Decimal('0.00'), rounding=ROUND_HALF_UP)  # 四舍五入保留2位小数
-        return h
+        return float(h)
 
     def __del__(self):
         self.conn.close()
@@ -144,7 +172,7 @@ def main():
     # alias dq = "python /.../dd.py query~"
 
     argv = sys.argv
-    # argv = ['dd', 'query~']
+    # argv = ['dd', 'test']
     dd = DayDayUp()
 
     if len(argv) == 1:
