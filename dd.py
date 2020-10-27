@@ -9,7 +9,7 @@ import pyperclip
 import matplotlib.pyplot as plt
 
 
-class DayDayUp():
+class DayDayUp:
 
     def __init__(self):
         # 学习内容
@@ -74,11 +74,7 @@ class DayDayUp():
         """)
         self.conn.commit()
 
-        # 持续时间转化为小时数
-        self.end += timedelta(minutes=1)  # TODO DELETE
-        h = (self.end - self.start).seconds / 60 / 60
-        h = Decimal(str(h)).quantize(Decimal('0.00'), rounding=ROUND_HALF_UP)  # 四舍五入保留2位小数
-
+        h = self.duration_to_hours(self.start, self.end)
         self.c.execute(f"""INSERT INTO records VALUES ('{self.content}',
                                                         {h},
                                                         '{self.start.strftime('%Y-%m-%d %H:%M')}',
@@ -129,6 +125,13 @@ class DayDayUp():
         # 上面的 DESC 和下面的 reversed() 为了让最新开始的项目排在最下面
         for content, hours in d.items().__reversed__():
             print(f'{hours:>4.1f} |{content}')
+
+    def duration_to_hours(self, start, end):
+        """ 持续时间转化为小时数 """
+        end += timedelta(minutes=1)  # TODO DELETE
+        h = (end - start).seconds / 60 / 60
+        h = Decimal(str(h)).quantize(Decimal('0.00'), rounding=ROUND_HALF_UP)  # 四舍五入保留2位小数
+        return h
 
     def __del__(self):
         self.conn.close()
