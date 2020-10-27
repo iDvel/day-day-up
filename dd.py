@@ -118,7 +118,7 @@ class DayDayUp():
         """ 查询每个项目的工作总时长 """
         d = OrderedDict()
 
-        self.c.execute("SELECT content, hours FROM records")
+        self.c.execute("SELECT content, hours FROM records ORDER BY rowid DESC")
 
         for content, hour in self.c.fetchall():
             if content not in d.keys():
@@ -126,7 +126,8 @@ class DayDayUp():
             else:
                 d[content] += hour
 
-        for content, hours in d.items():
+        # 上面的 DESC 和下面的 reversed() 为了让最新开始的项目排在最下面
+        for content, hours in d.items().__reversed__():
             print(f'{hours:>4.1f} |{content}')
 
     def __del__(self):
@@ -140,7 +141,7 @@ def main():
     # alias dq = "python /.../dd.py query~"
 
     argv = sys.argv
-    print(argv)
+    # argv = ['dd', 'query~']
     dd = DayDayUp()
 
     if len(argv) == 1:

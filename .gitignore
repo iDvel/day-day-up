@@ -1,5 +1,5 @@
 record.txt
-record*
 record.sqlite3
+tem.py
 *.sqlite3
 .idea/
